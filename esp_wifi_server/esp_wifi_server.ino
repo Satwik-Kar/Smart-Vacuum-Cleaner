@@ -36,7 +36,7 @@ function setMode(m) {
 }
 </script>
 </head>
-<body onload="setMode('A')">
+<body onload="setMode('M')">
 <div class="container">
   
   <div class="panel">
@@ -69,7 +69,7 @@ void setup() {
   server.on("/cmd", []() {
     String c = server.arg("c");
     Serial.print(c);
-    server.send(200, "text/plain", "OK");s
+    server.send(200, "text/plain", "OK");
   });
   server.begin();
 }

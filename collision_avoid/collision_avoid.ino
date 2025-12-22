@@ -17,11 +17,13 @@
 Servo headServo;
 
 const int motorSpeed = 255; 
-bool isAutoMode = true;
+
+bool isAutoMode = false; 
 
 int baseLeft = 0;
 int baseRight = 0;
-const int tolerance = 150;
+
+const int tolerance = 500;
 const int obstacleDistCm = 25;
 
 const int TIME_TURN_90 = 500;
@@ -30,7 +32,8 @@ const int TIME_LANE_SHIFT = 600;
 void setMotors(int pwm, int in1, int in2, int in3, int in4) {
   analogWrite(ENA, pwm);
   analogWrite(ENB, pwm);
-  digitalWrite(IN1, in1); digitalWrite(IN2, in2);
+  digitalWrite(IN1, in1);
+  digitalWrite(IN2, in2);
   digitalWrite(IN3, in3); digitalWrite(IN4, in4);
 }
 
@@ -53,7 +56,6 @@ void setup() {
   Serial.begin(9600);
   headServo.attach(SERVO_PIN);
   headServo.write(90);
-
   pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
   pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
   pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
@@ -66,7 +68,6 @@ void setup() {
 void performLaneSwitch(bool turnRight) {
   stopBot();
   delay(200);
-
   if (turnRight) {
     setMotors(motorSpeed, HIGH, LOW, LOW, HIGH);
   } else {
@@ -75,7 +76,6 @@ void performLaneSwitch(bool turnRight) {
   delay(TIME_TURN_90);
   stopBot();
   delay(200);
-  
   setMotors(motorSpeed, HIGH, LOW, HIGH, LOW);
   delay(TIME_LANE_SHIFT);
   stopBot();
@@ -104,7 +104,6 @@ void handleObstacle() {
   
   headServo.write(90); 
   delay(200);
-
   if (rightDist > leftDist) {
     performLaneSwitch(true);
   } else {
@@ -116,9 +115,7 @@ void runAutoLogic() {
   int currLeft = analogRead(IR_FRONT_LEFT);
   int currRight = analogRead(IR_FRONT_RIGHT);
   int dist = getDistance();
-
   bool cliffDetected = (currLeft > (baseLeft + tolerance)) || (currRight > (baseRight + tolerance));
-
   if (cliffDetected) {
     stopBot();
     setMotors(motorSpeed, LOW, HIGH, LOW, HIGH); 
@@ -138,8 +135,9 @@ void runAutoLogic() {
 void loop() {
   if (Serial.available()) {
     char c = Serial.read();
-    
     if (c == 'A') {
+      baseLeft = analogRead(IR_FRONT_LEFT);
+      baseRight = analogRead(IR_FRONT_RIGHT);
       isAutoMode = true;
     } else if (c == 'M') {
       isAutoMode = false;
