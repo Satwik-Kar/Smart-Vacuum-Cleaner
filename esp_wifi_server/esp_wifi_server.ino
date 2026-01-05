@@ -16,18 +16,18 @@ String page = R"=====(
 body { margin:0; padding:0; background:#121212; color:#00ffcc; font-family:Arial; overflow:hidden; width:100vw; height:100vh; user-select:none; }
 .container { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; }
 .controls { display:grid; grid-template-columns:80px 80px 80px; grid-template-rows:80px 80px 80px; gap:10px; }
-.btn { background:#1e1e1e; border:2px solid #00ffcc; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:30px; color:#00ffcc; touch-action:manipulation; }
+.btn { background:#1e1e1e; border:2px solid #00ffcc; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:30px; color:#00ffcc; touch-action:manipulation; cursor:pointer; }
 .btn:active { background:#00ffcc; color:#000; box-shadow:0 0 20px #00ffcc; }
 .stop { border-color:#ff0055; color:#ff0055; border-radius:15px; }
 .stop:active { background:#ff0055; color:#fff; }
 .panel { background:#222; padding:15px; border-radius:10px; border:1px solid #444; width:300px; text-align:center; }
-.mode-btn { width:45%; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; }
+.mode-btn { width:45%; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px; margin:0 5px; }
 .mode-active { background:#00ffcc; color:#000; }
 .mode-inactive { background:#444; color:#888; }
 .hidden { visibility: hidden; pointer-events: none; }
 </style>
 <script>
-function send(c) { fetch("/cmd?c=" + c); }
+function send(c) { fetch("/cmd?c=" + c).catch(e => console.log(e)); }
 function setMode(m) {
   send(m);
   document.getElementById('btnAuto').className = m === 'A' ? 'mode-btn mode-active' : 'mode-btn mode-inactive';
@@ -38,25 +38,22 @@ function setMode(m) {
 </head>
 <body onload="setMode('M')">
 <div class="container">
-  
   <div class="panel">
-    <h3>MODE</h3>
+    <h3>VACUUM MODE</h3>
     <button id="btnAuto" class="mode-btn" onclick="setMode('A')">AUTO</button>
     <button id="btnMan" class="mode-btn" onclick="setMode('M')">MANUAL</button>
   </div>
-
   <div id="dpad" class="controls hidden">
     <div></div>
-    <div class="btn" ontouchstart="send('F')" ontouchend="send('S')">&#9650;</div>
+    <div class="btn" ontouchstart="send('F')" ontouchend="send('S')" onmousedown="send('F')" onmouseup="send('S')">&#9650;</div>
     <div></div>
-    <div class="btn" ontouchstart="send('L')" ontouchend="send('S')">&#9664;</div>
-    <div class="btn stop" ontouchstart="send('S')">&#9632;</div>
-    <div class="btn" ontouchstart="send('R')" ontouchend="send('S')">&#9654;</div>
+    <div class="btn" ontouchstart="send('L')" ontouchend="send('S')" onmousedown="send('L')" onmouseup="send('S')">&#9664;</div>
+    <div class="btn stop" ontouchstart="send('S')" onclick="send('S')">&#9632;</div>
+    <div class="btn" ontouchstart="send('R')" ontouchend="send('S')" onmousedown="send('R')" onmouseup="send('S')">&#9654;</div>
     <div></div>
-    <div class="btn" ontouchstart="send('B')" ontouchend="send('S')">&#9660;</div>
+    <div class="btn" ontouchstart="send('B')" ontouchend="send('S')" onmousedown="send('B')" onmouseup="send('S')">&#9660;</div>
     <div></div>
   </div>
-
 </div>
 </body>
 </html>
@@ -67,11 +64,15 @@ void setup() {
   WiFi.softAP(ssid, password);
   server.on("/", []() { server.send(200, "text/html", page); });
   server.on("/cmd", []() {
-    String c = server.arg("c");
-    Serial.print(c);
+    if (server.hasArg("c")) {
+      String c = server.arg("c");
+      Serial.print(c);
+    }
     server.send(200, "text/plain", "OK");
   });
   server.begin();
 }
 
-void loop() { server.handleClient(); }
+void loop() {
+  server.handleClient();
+}

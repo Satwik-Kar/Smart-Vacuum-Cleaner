@@ -1,6 +1,6 @@
 #include <Servo.h>
 
-#define ENA 9
+#define ENA 3
 #define IN1 8
 #define IN2 7
 #define ENB 6
@@ -16,14 +16,13 @@
 
 Servo headServo;
 
-const int motorSpeed = 255; 
+const int motorSpeed = 180; 
 
 bool isAutoMode = false; 
 
 int baseLeft = 0;
 int baseRight = 0;
-
-const int tolerance = 500;
+const int tolerance = 250; 
 const int obstacleDistCm = 25;
 
 const int TIME_TURN_90 = 500;
@@ -34,7 +33,8 @@ void setMotors(int pwm, int in1, int in2, int in3, int in4) {
   analogWrite(ENB, pwm);
   digitalWrite(IN1, in1);
   digitalWrite(IN2, in2);
-  digitalWrite(IN3, in3); digitalWrite(IN4, in4);
+  digitalWrite(IN3, in3);
+  digitalWrite(IN4, in4);
 }
 
 void stopBot() {
@@ -56,9 +56,15 @@ void setup() {
   Serial.begin(9600);
   headServo.attach(SERVO_PIN);
   headServo.write(90);
-  pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
-  pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
-  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
+
+  pinMode(ENA, OUTPUT); 
+  pinMode(IN1, OUTPUT); 
+  pinMode(IN2, OUTPUT);
+  pinMode(ENB, OUTPUT); 
+  pinMode(IN3, OUTPUT); 
+  pinMode(IN4, OUTPUT);
+  pinMode(TRIG, OUTPUT); 
+  pinMode(ECHO, INPUT);
 
   delay(1000);
   baseLeft = analogRead(IR_FRONT_LEFT);
@@ -104,6 +110,7 @@ void handleObstacle() {
   
   headServo.write(90); 
   delay(200);
+
   if (rightDist > leftDist) {
     performLaneSwitch(true);
   } else {
@@ -115,13 +122,15 @@ void runAutoLogic() {
   int currLeft = analogRead(IR_FRONT_LEFT);
   int currRight = analogRead(IR_FRONT_RIGHT);
   int dist = getDistance();
+
   bool cliffDetected = (currLeft > (baseLeft + tolerance)) || (currRight > (baseRight + tolerance));
+
   if (cliffDetected) {
     stopBot();
     setMotors(motorSpeed, LOW, HIGH, LOW, HIGH); 
-    delay(400);
-    setMotors(motorSpeed, HIGH, LOW, LOW, HIGH); 
     delay(500);
+    setMotors(motorSpeed, LOW, HIGH, HIGH, LOW); 
+    delay(600);
     stopBot();
   } 
   else if (dist < obstacleDistCm) {
